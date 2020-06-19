@@ -1,0 +1,5 @@
+bin
+obj
+appsetting.json
+out
+appsettings.Development.json
