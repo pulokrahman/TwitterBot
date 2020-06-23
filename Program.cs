@@ -146,7 +146,7 @@ namespace Twitter
           else  if (json.statuses.Length > 0 && Since == true)
             {
                 var k = json.statuses[json.statuses.Length-1];
-                Console.WriteLine(k.text);
+          //      Console.WriteLine(k.text);
                 //   l--;
                 searchkey = k.id_str;
                 if (Retweets)
