@@ -54,7 +54,7 @@ namespace Twitter
         static string MaxKey;
         static Boolean Max = false;
         static Boolean Since = false;
-        static Boolean Retweets = false;
+        static Boolean Retweets = true;
        static int l = 7;
        public static async Task Search(string what,Boolean Recent)
         {
@@ -130,12 +130,12 @@ namespace Twitter
             //Console.WriteLine(urlencoded);
             var response = await client.GetAsync("https://api.twitter.com/1.1/search/tweets.json"+urlencoded);
             var responseString = await response.Content.ReadAsStringAsync();
-           Console.WriteLine(responseString);
+          // Console.WriteLine(responseString);
            
             Tweets json = System.Text.Json.JsonSerializer.Deserialize<Tweets>(responseString);
             if (json.statuses.Length >0 && Since==false) {
                 var k = json.statuses[0];
-                Console.WriteLine(k.text);
+             //   Console.WriteLine(k.text);
              //   l--;
                 searchkey = k.id_str;
                 if (Retweets)
