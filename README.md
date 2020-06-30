@@ -1,3 +1,5 @@
 "# TWITTER" 
 "# TwitterBot" 
 "# Deployed as a container on Heroku"
+"#Now searches for the newest videos"
+"#Multithreading for retweeting and for tweeting newest vids"

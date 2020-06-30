@@ -18,7 +18,8 @@ using System.Text.Json;
 using Twitter.Models;
 using System.Threading;
 using Microsoft.Extensions.Options;
-
+ using TwitterBot.Services;
+ using Youtube.Models;
 namespace Twitter
 {
     public class Tweets
@@ -39,7 +40,8 @@ namespace Twitter
 
     public class Program
     {
-  
+    private static SemaphoreSlim semaphore = new SemaphoreSlim(1);
+      private const int numThreads = 2;
           static string oauth_consumer_key;
        static string CONSUMER_TOKEN;
         static string oauth_token;
@@ -47,6 +49,7 @@ namespace Twitter
        static Dictionary<String, String> foo;
         static string signingkey; 
       static byte[] key;
+      static string youtubekey;
 
     static HMACSHA1 myhmacsha1;
        
@@ -125,7 +128,7 @@ namespace Twitter
         "&",
        foo
             .Where(kvp => !kvp.Key.StartsWith("oauth_"))
-            .Select(kvp => string.Format("{0}={1}", kvp.Key, kvp.Value))
+            .Select(kvp => string.Format("{0}={1}", Uri.EscapeDataString( kvp.Key), Uri.EscapeDataString( kvp.Value)))
             .OrderBy(s => s));
             //Console.WriteLine(urlencoded);
             var response = await client.GetAsync("https://api.twitter.com/1.1/search/tweets.json"+urlencoded);
@@ -162,6 +165,7 @@ namespace Twitter
             IntializeDictionary();
             foo.Add("status", status);
             string param = ConstructParameterstring(foo);
+             Console.WriteLine(param);
             string url = "https://api.twitter.com/1.1/statuses/update.json";
             string ParamString =string.Format(
              "{0}&{1}&{2}",
@@ -234,7 +238,7 @@ namespace Twitter
           "&",
           foo
               .Union(foo)
-              .Select(kvp => string.Format("{0}={1}", kvp.Key, kvp.Value))
+              .Select(kvp => string.Format("{0}={1}", Uri.EscapeDataString( kvp.Key),Uri.EscapeDataString( kvp.Value)))
               .OrderBy(s => s)
       );
             return str;
@@ -247,7 +251,7 @@ public static void Intialize() {
         .Build();
          OAuth settings_oauth = new OAuth();
     config.GetSection("Oauth").Bind(settings_oauth);
-    
+        youtubekey=config.GetValue<string>("youtubekey");
  
            oauth_consumer_key=settings_oauth.oauth_consumer_key;
        CONSUMER_TOKEN=settings_oauth.CONSUMER_TOKEN;
@@ -259,30 +263,91 @@ public static void Intialize() {
       myhmacsha1 = new HMACSHA1(key);
 
 }
-        public static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
          
           Intialize();
-            await Search(Uri.EscapeDataString("from:Thunderblunder7 AND -filter:retweets AND -filter:replies"),true); //need to urlencode it
        
+            
+            Thread newThread1 = new Thread(new ThreadStart(Thread1));
+            newThread1.Name = "YoutubeThread";
+            newThread1.Start();
+         Thread newThread2=new Thread(new ThreadStart(Thread2));
+          newThread2.Name="RetweetThread";
+          newThread2.Start();
+   while (true); 
+
+ 
+         
+        }
+        private static async void Thread2() {
+await ThreadForRetweets();
+
+        }
+         private static async Task ThreadForRetweets() {
+              
+   await semaphore.WaitAsync();
+
+     
+
+    try
+{
+    await Search("from:Thunderblunder7 AND -filter:retweets AND -filter:replies",true); 
+}
+finally
+{     
+   semaphore.Release();
+          
+
+}
+   Since = true;
+          
             while (true)
             {
 
                 Thread.Sleep(60*1000);
-                Since = true;
-                await Search(Uri.EscapeDataString("from:Thunderblunder7 AND -filter:retweets AND -filter:replies"), true); //need to urlencode it
-            } 
+                     
+                await semaphore.WaitAsync();
+                
+            try {
+                await Search("from:Thunderblunder7 AND -filter:retweets AND -filter:replies",true);
+            }
+                finally
+{     
+   semaphore.Release();
+               
+}
+            }  
             //await Retweet(searchkey);
-           
- 
-         
-        }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+         }
+        private static async void Thread1() {
+       await ThreadForYoutube();
+
+        }
+        private static async Task ThreadForYoutube() {
+            
+YoutubeService SearchTime= new YoutubeService(youtubekey);
+   while (true ){
+              
+          await semaphore.WaitAsync();
+     
+      try {
+   var VID = SearchTime.Search().Result;
+       if (VID!=null) {
+         
+ await Tweet1("Checkout Blunder's New VID https://www.youtube.com/watch?v="+VID.VidID);
+       }
+      }
+  finally
+{     
+   semaphore.Release();
+                    
+}
+
+  Thread.Sleep(60*1000);
+        }
+        }
+      
+}
 }
