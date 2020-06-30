@@ -333,11 +333,23 @@ YoutubeService SearchTime= new YoutubeService(youtubekey);
           await semaphore.WaitAsync();
      
       try {
+          try {
    var VID = SearchTime.Search().Result;
        if (VID!=null) {
          
  await Tweet1("Checkout Blunder's New VID https://www.youtube.com/watch?v="+VID.VidID);
        }
+          }
+        catch  (AggregateException ex)
+      {
+          //Incase youtube throws an error for going over the quota
+        foreach (var e in ex.InnerExceptions)
+        {
+          Console.WriteLine("Error: " + e.Message);
+        }
+      }
+
+      
       }
   finally
 {     
