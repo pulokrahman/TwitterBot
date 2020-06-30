@@ -345,7 +345,7 @@ YoutubeService SearchTime= new YoutubeService(youtubekey);
                     
 }
 
-  Thread.Sleep(60*1000);
+  Thread.Sleep(15*60*1000); //Since you're only allowed 100 searches per day for the youtube API, floor(100/24)=4, so 4 searches per hour.
         }
         }
       
